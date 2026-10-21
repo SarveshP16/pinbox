@@ -49,3 +49,6 @@ app.*.map.json
 
 # Screens rendered by test/preview_test.dart (dev-only, regenerable)
 test/preview/
+
+# Local-only working checklist (not the tracked TODO.md backlog)
+/TODO.local.md
