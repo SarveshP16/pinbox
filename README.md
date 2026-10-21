@@ -78,3 +78,9 @@ distribute a modified version, it has to stay under the same license.
 The bundled fonts are not covered by the GPL: both Plus Jakarta Sans and DM Sans
 are under the SIL Open Font License 1.1, whose text sits beside them in
 `assets/fonts/`. [Lucide](https://lucide.dev) icons are ISC-licensed.
+
+## Publishing
+
+[docs/PUBLISHING.md](docs/PUBLISHING.md) covers releasing to GitHub, F-Droid and
+the Play Store: the per-release checklist, the F-Droid recipe in `fdroid/`, and the
+shared store listing in `fastlane/metadata/android/en-US/`.
