@@ -1,0 +1,1 @@
+Offline vault for bank card PINs, login PINs and banking passwords.

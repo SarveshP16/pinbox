@@ -1,0 +1,29 @@
+Pinbox keeps the numbers you are not supposed to write down anywhere: bank card PINs, login PINs, phone unlock codes and banking passwords. It stays on your phone. The release build does not request the INTERNET permission at all, so there is no account to make, no sync, no server, and nothing to leak.
+
+<b>How your data is kept</b>
+
+Everything lives in a single AES-256-GCM encrypted file. Its random 256-bit key is held by the Android Keystore, never stored next to the file it unlocks. Your master PIN and master password are never saved — only salted PBKDF2-HMAC-SHA256 hashes with 600,000 iterations.
+
+<b>Getting in</b>
+
+A 6-digit master PIN, with a longer master password as a fallback, and optional fingerprint or face unlock. Repeated wrong guesses are rate-limited: five free tries, then a 30-second wait that doubles up to an hour. The counter survives restarting the app, so force-quitting does not reset it.
+
+<b>Built for reading a PIN in public</b>
+
+PINs stay masked until you ask. A revealed PIN hides itself again after a few seconds, the moment the app locks, and whenever it leaves the foreground. Screenshots and screen recording are blocked, and the app's thumbnail in the recent-apps list is blank. Copies are flagged sensitive on Android 13+ so they stay out of clipboard history, and the clipboard is wiped automatically.
+
+<b>Seven kinds of entry</b>
+
+Debit card, credit card, card lock PIN, login PIN, phone PIN, password, and bank info (account name and number, BSB/IFSC, CIF). Entries group themselves by bank. Account numbers and CIF numbers mask and reveal exactly like a PIN, each with its own copy button.
+
+<b>Backups</b>
+
+Export an encrypted backup file protected by a password you choose at export time — deliberately not your 6-digit PIN, which is too small a space to protect a file that can be copied off the phone.
+
+<b>There is no recovery</b>
+
+If you forget both the master PIN and the master password, your data cannot be opened. Nobody can reset it for you, because there is nobody in the loop. That is the trade-off Pinbox is built around, so keep a backup.
+
+<b>Free software</b>
+
+GPL-3.0-or-later. No ads, no trackers, no analytics, no accounts.
