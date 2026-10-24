@@ -31,6 +31,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Not used by Pinbox's own code, but Flutter's Cupertino widgets reference this
+  # font and the release build warns without it. Tree-shaking keeps only the
+  # glyphs actually used, so it costs a few bytes.
+  cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.4.3
   go_router: ^18.0.1
   flutter_secure_storage: ^11.2.0
