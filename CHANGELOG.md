@@ -4,6 +4,10 @@ All notable changes to Pinbox. Format: [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-24
+
+First public release, marked beta.
+
 ### Security
 - **Unlock lockout could be skipped by changing the phone's clock.** Waits are now
   timed on Android's monotonic boot clock, which Settings can't change; the shown
