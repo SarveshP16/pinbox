@@ -55,7 +55,7 @@ void main() {
       type: EntryType.password,
       secret: 'correct-horse',
       created: DateTime.utc(2026, 1, 5),
-    ),
+    ).copyWith(pinned: true), // so the list screens show the Pinned section
     entry(
       id: '6',
       bank: 'Lantern Savings',

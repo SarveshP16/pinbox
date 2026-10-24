@@ -4,6 +4,22 @@ All notable changes to Pinbox. Format: [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+### Added
+- **Pinned entries.** The pin button on an entry's screen moves it into a Pinned
+  section above the bank cards, where its row names its bank. Unpinning returns it
+  to its bank.
+- **Sort options.** A sort button on My PINs offers A–Z, Recently used and Recently
+  added, and the choice is remembered. "Recently used" counts opening an entry or
+  copying its secret, but not peeking at it on the list, so a row doesn't jump away
+  under your finger.
+
+### Changed
+- The list is A–Z by default — banks by name, entries by type — instead of in the
+  order they were first added.
+- Pins and usage times are saved without taking an automatic backup, so they can't
+  push real edits out of the ten that are kept. Both are included in exported
+  backups, and a pin counts as an edit when a backup is merged back in.
+
 ## [1.0.0] - 2026-10-24
 
 First public release, marked beta.

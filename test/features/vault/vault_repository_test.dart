@@ -150,6 +150,13 @@ void main() {
       );
     });
 
+    test('a bookkeeping save can opt out of the snapshot', () async {
+      await snapshotting.save([entry(id: '1')]);
+      await snapshotting.save([entry(id: '1'), entry(id: '2')], snapshot: false);
+      expect(await snapshots.list(), isEmpty);
+      expect((await snapshotting.load()).map((e) => e.id), ['1', '2']);
+    });
+
     test('wipe clears the snapshots too, not just the vault', () async {
       await snapshotting.save([entry(id: '1')]);
       await snapshotting.save([entry(id: '1'), entry(id: '2')]);

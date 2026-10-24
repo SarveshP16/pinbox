@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,9 +7,13 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/crypto/packed_cipher.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/widgets/option_sheet.dart';
+import '../../settings/application/settings_controller.dart';
 import '../application/reveal_controller.dart';
 import '../application/vault_controller.dart';
 import '../domain/bank_grouping.dart';
+import '../domain/entry_sort.dart';
+import '../domain/vault_arrangement.dart';
 import '../domain/vault_entry.dart';
 import 'copy_secret.dart';
 import 'widgets/add_pin_fab.dart';
@@ -16,6 +22,7 @@ import 'widgets/empty_vault.dart';
 import 'widgets/entry_row.dart';
 import 'widgets/my_pins_header.dart';
 import 'widgets/pin_search_field.dart';
+import 'widgets/pinned_card.dart';
 
 /// Screen 2: every saved secret, grouped by bank.
 class MyPinsScreen extends ConsumerStatefulWidget {
@@ -35,18 +42,37 @@ class _MyPinsScreenState extends ConsumerState<MyPinsScreen> {
     super.dispose();
   }
 
-  String _summary(List<BankGroup> groups) {
-    if (groups.isEmpty) return 'Nothing saved yet';
-    final saved = groups.fold<int>(0, (sum, g) => sum + g.entries.length);
-    return '${groups.length} ${groups.length == 1 ? 'bank' : 'banks'} · $saved saved';
+  String _summary(List<VaultEntry> entries) {
+    if (entries.isEmpty) return 'Nothing saved yet';
+    final banks = groupByBank(entries).length;
+    return '$banks ${banks == 1 ? 'bank' : 'banks'} · ${entries.length} saved';
+  }
+
+  Future<void> _chooseSort(EntrySort current) async {
+    final picked = await showOptionSheet<EntrySort>(
+      context,
+      title: 'Sort by',
+      options: [for (final s in EntrySort.values) (label: s.label, value: s)],
+      selected: current,
+    );
+    if (picked != null && picked != current) {
+      await ref.read(settingsProvider.notifier).setEntrySort(picked);
+    }
+  }
+
+  void _open(VaultEntry entry) {
+    // Best-effort bookkeeping for "Recently used"; opening never waits on it.
+    unawaited(ref.read(vaultProvider.notifier).markUsed(entry.id));
+    context.push(AppRoutes.detail(entry.id));
   }
 
   @override
   Widget build(BuildContext context) {
     final vault = ref.watch(vaultProvider);
     final reveal = ref.watch(revealProvider);
-    final allGroups = groupByBank(vault.value ?? const <VaultEntry>[]);
-    final groups = searchGroups(allGroups, _query);
+    final sort = ref.watch(settingsProvider.select((s) => s.entrySort));
+    final entries = vault.value ?? const <VaultEntry>[];
+    final sections = arrangeVault(entries, sort: sort, query: _query);
 
     return Scaffold(
       body: SafeArea(
@@ -60,7 +86,8 @@ class _MyPinsScreenState extends ConsumerState<MyPinsScreen> {
                   padding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
                   sliver: SliverToBoxAdapter(
                     child: MyPinsHeader(
-                      summary: _summary(allGroups),
+                      summary: _summary(entries),
+                      onSort: () => _chooseSort(sort),
                       onSettings: () => context.push(AppRoutes.settings),
                     ),
                   ),
@@ -74,7 +101,7 @@ class _MyPinsScreenState extends ConsumerState<MyPinsScreen> {
                     ),
                   ),
                 ),
-                ..._body(vault, allGroups, groups, reveal),
+                ..._body(vault, entries, sections, reveal),
                 // Room so the last card can scroll clear of the floating button.
                 const SliverToBoxAdapter(child: SizedBox(height: 120)),
               ],
@@ -90,10 +117,28 @@ class _MyPinsScreenState extends ConsumerState<MyPinsScreen> {
     );
   }
 
+  Widget _row(VaultEntry entry, RevealState reveal, {bool showBank = false}) {
+    return EntryRow(
+      key: ValueKey(entry.id),
+      entry: entry,
+      showBank: showBank,
+      revealed: reveal.isRevealed(entry.id),
+      secondsLeft: reveal.secondsLeft,
+      onOpen: () => _open(entry),
+      onToggleReveal: () {
+        final controller = ref.read(revealProvider.notifier);
+        reveal.isRevealed(entry.id)
+            ? controller.hide()
+            : controller.reveal(entry.id);
+      },
+      onCopy: () => copyEntrySecret(context, ref, entry),
+    );
+  }
+
   List<Widget> _body(
     AsyncValue<List<VaultEntry>> vault,
-    List<BankGroup> allGroups,
-    List<BankGroup> groups,
+    List<VaultEntry> entries,
+    VaultSections sections,
     RevealState reveal,
   ) {
     if (vault.isLoading && !vault.hasValue) {
@@ -116,7 +161,7 @@ class _MyPinsScreenState extends ConsumerState<MyPinsScreen> {
         ),
       ];
     }
-    if (allGroups.isEmpty) {
+    if (entries.isEmpty) {
       return const [
         SliverToBoxAdapter(
           child: EmptyVault(
@@ -126,7 +171,7 @@ class _MyPinsScreenState extends ConsumerState<MyPinsScreen> {
         ),
       ];
     }
-    if (groups.isEmpty) {
+    if (sections.isEmpty) {
       return [
         SliverToBoxAdapter(
           child: EmptyVault(
@@ -138,35 +183,30 @@ class _MyPinsScreenState extends ConsumerState<MyPinsScreen> {
       ];
     }
 
+    final groups = sections.groups;
     return [
+      if (sections.pinned.isNotEmpty)
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, groups.isEmpty ? 0 : 14),
+          sliver: SliverToBoxAdapter(
+            child: PinnedCard(
+              count: sections.pinned.length,
+              rows: [
+                for (final entry in sections.pinned)
+                  _row(entry, reveal, showBank: true),
+              ],
+            ),
+          ),
+        ),
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         sliver: SliverList.separated(
           itemCount: groups.length,
           separatorBuilder: (_, _) => const SizedBox(height: 14),
-          itemBuilder: (context, i) {
-            final group = groups[i];
-            return BankCard(
-              group: group,
-              rows: [
-                for (final entry in group.entries)
-                  EntryRow(
-                    key: ValueKey(entry.id),
-                    entry: entry,
-                    revealed: reveal.isRevealed(entry.id),
-                    secondsLeft: reveal.secondsLeft,
-                    onOpen: () => context.push(AppRoutes.detail(entry.id)),
-                    onToggleReveal: () {
-                      final controller = ref.read(revealProvider.notifier);
-                      reveal.isRevealed(entry.id)
-                          ? controller.hide()
-                          : controller.reveal(entry.id);
-                    },
-                    onCopy: () => copyEntrySecret(context, ref, entry),
-                  ),
-              ],
-            );
-          },
+          itemBuilder: (context, i) => BankCard(
+            group: groups[i],
+            rows: [for (final entry in groups[i].entries) _row(entry, reveal)],
+          ),
         ),
       ),
     ];

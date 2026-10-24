@@ -43,6 +43,8 @@ class PinDetailScreen extends ConsumerWidget {
         child: Column(
           children: [
             DetailTopBar(
+              pinned: entry.pinned,
+              onTogglePin: () => _togglePin(context, ref, entry),
               onEdit: () => context.push(AppRoutes.edit(entry.id)),
               onDelete: () => _delete(context, ref, entry),
             ),
@@ -89,6 +91,19 @@ class PinDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _togglePin(
+    BuildContext context,
+    WidgetRef ref,
+    VaultEntry entry,
+  ) async {
+    await ref.read(vaultProvider.notifier).togglePin(entry.id);
+    if (!context.mounted) return;
+    showAppSnackBar(
+      context,
+      entry.pinned ? 'Unpinned' : 'Pinned to the top of My PINs',
     );
   }
 

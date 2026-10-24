@@ -19,7 +19,7 @@ import '../../backup/presentation/restore_snapshot_sheet.dart';
 import '../../lock/application/lock_controller.dart';
 import '../application/settings_controller.dart';
 import '../domain/duration_labels.dart';
-import 'widgets/option_sheet.dart';
+import '../../../core/widgets/option_sheet.dart';
 import 'widgets/settings_group.dart';
 import 'widgets/settings_tiles.dart';
 

@@ -59,8 +59,8 @@ class InMemoryVaultRepository extends VaultRepository {
   Future<List<VaultEntry>> load() async => [...stored];
 
   @override
-  Future<void> save(List<VaultEntry> entries) async {
-    if (stored.isNotEmpty) {
+  Future<void> save(List<VaultEntry> entries, {bool snapshot = true}) async {
+    if (snapshot && stored.isNotEmpty) {
       final file = File('snapshot-${_taken++}');
       snapshotContents[file.path] = [...stored];
       snapshotStore.held.insert(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../vault/domain/entry_sort.dart';
 import 'app_settings.dart';
 
 class SettingsRepository {
@@ -14,6 +15,7 @@ class SettingsRepository {
   static const _hideAfter = 'hide_after_seconds';
   static const _clearClipboard = 'clear_clipboard_seconds';
   static const _themeMode = 'theme_mode';
+  static const _entrySort = 'entry_sort';
 
   AppSettings read() {
     const d = AppSettings();
@@ -28,6 +30,7 @@ class SettingsRepository {
       themeMode:
           ThemeMode.values.asNameMap()[_prefs.getString(_themeMode)] ??
           d.themeMode,
+      entrySort: EntrySort.fromName(_prefs.getString(_entrySort)),
     );
   }
 
@@ -38,5 +41,6 @@ class SettingsRepository {
     await _prefs.setInt(_hideAfter, s.hideAfterSeconds);
     await _prefs.setInt(_clearClipboard, s.clearClipboardSeconds);
     await _prefs.setString(_themeMode, s.themeMode.name);
+    await _prefs.setString(_entrySort, s.entrySort.name);
   }
 }

@@ -46,11 +46,14 @@ class VaultRepository {
     );
   }
 
-  Future<void> save(List<VaultEntry> entries) async {
+  /// Writes [entries]. With [snapshot] (the default) the previous state is
+  /// copied aside first so the save can be undone; bookkeeping-only saves —
+  /// usage times, pins — pass false so they don't push real edits out of the
+  /// limited snapshot history.
+  Future<void> save(List<VaultEntry> entries, {bool snapshot = true}) async {
     final vaultFile = await file();
 
-    // Copy the pre-change vault aside first, so this save can be undone.
-    await snapshots?.capture(vaultFile);
+    if (snapshot) await snapshots?.capture(vaultFile);
 
     final key = await _existingKey() ?? await _createKey();
     final body = utf8.encode(

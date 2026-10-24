@@ -14,7 +14,7 @@ PINs stay masked until you ask. A revealed PIN hides itself again after a few se
 
 <b>Seven kinds of entry</b>
 
-Debit card, credit card, card lock PIN, login PIN, phone PIN, password, and bank info (account name and number, BSB/IFSC, CIF). Entries group themselves by bank. Account numbers and CIF numbers mask and reveal exactly like a PIN, each with its own copy button.
+Debit card, credit card, card lock PIN, login PIN, phone PIN, password, and bank info (account name and number, BSB/IFSC, CIF). Entries group themselves by bank. Pin the ones you use most to the top, and sort the rest A–Z, by recently used or by recently added. Account numbers and CIF numbers mask and reveal exactly like a PIN, each with its own copy button.
 
 <b>Backups</b>
 

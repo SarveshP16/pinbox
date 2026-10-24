@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **App:** Pinbox (`com.pinbox.app`)
-**Last updated:** 24 October 2026
+**Last updated:** 25 October 2026
 
 ## The short version
 
@@ -11,9 +11,11 @@ technically capable of transmitting your data anywhere.
 
 ## What data Pinbox stores
 
-Only what you type into it: bank names, PINs, passwords, account numbers,
+What you type into it: bank names, PINs, passwords, account numbers,
 card-ending digits, nicknames and notes, plus your master PIN and master
-password.
+password. Alongside each entry it also keeps whether you pinned it and when you
+last opened it or copied its secret — used only to order the list on your
+screen.
 
 All of it is stored **on your device only**, inside a single AES-256-GCM
 encrypted file in the app's private storage. The encryption key is held by the

@@ -20,7 +20,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/2_dark.png">
-    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="200" alt="My PINs, grouped by bank">
+    <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="200" alt="My PINs: a pinned entry above the bank cards">
   </picture>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/3_dark.png">
@@ -70,6 +70,8 @@ permission, so there's no account, no sync, no server, and nothing to leak.
   PIN, password, and bank info (account name and number, BSB/IFSC, CIF). Entries
   group themselves by bank, and search covers banks, entry types, nicknames,
   account names and card endings — never the secrets themselves.
+- **Pin and sort** — pin the entries you reach for most above everything else,
+  and order the rest A–Z, by recently used or by recently added.
 - **Masked until you ask** — PINs, account numbers and CIF numbers stay hidden until
   revealed, and hide themselves again after a few seconds.
 - **Master PIN, password fallback, biometrics** — a 6-digit PIN to open the app, a
@@ -101,6 +103,14 @@ alongside it as its own entry.
 Tap an entry to open it. **Reveal** shows the secret for a few seconds; the copy
 button puts it on the clipboard, which Pinbox clears again after 30 seconds by
 default. On the list, tapping a row's dots peeks at it without opening it.
+
+### Pinning and sorting
+On an entry's screen, the **pin** button moves it to a **Pinned** section at the
+top of My PINs; tap it again to put it back in its bank. The **sort** button
+beside Settings orders the list **A–Z** (the default), **Recently used** or
+**Recently added**, and Pinbox remembers your choice. Opening an entry or copying
+its secret counts as using it; peeking at it on the list doesn't, so rows stay
+put while you look.
 
 ### Locking
 Pinbox locks itself after a minute in the background (adjustable in **Settings ›

@@ -26,9 +26,47 @@ class VaultController extends AsyncNotifier<List<VaultEntry>> {
 
   List<VaultEntry> get _current => state.value ?? const [];
 
-  Future<void> _commit(List<VaultEntry> next) async {
-    await ref.read(vaultRepositoryProvider).save(next);
+  Future<void> _commit(List<VaultEntry> next, {bool snapshot = true}) async {
+    await ref.read(vaultRepositoryProvider).save(next, snapshot: snapshot);
     state = AsyncData(next);
+  }
+
+  /// Opening an entry or copying its secret within this long of the last time
+  /// doesn't write again — it wouldn't change its place in "Recently used".
+  static const usageThrottle = Duration(minutes: 1);
+
+  /// Pins an entry above the bank groups, or unpins it.
+  ///
+  /// Counts as an edit for backup merging ([merge] keeps the newer copy), but
+  /// isn't snapshotted: undoing it is one more tap.
+  Future<void> togglePin(String id) => _commit([
+    for (final e in _current)
+      if (e.id == id)
+        e.copyWith(pinned: !e.pinned, updatedAt: DateTime.now())
+      else
+        e,
+  ], snapshot: false);
+
+  /// Records that an entry was just used, for the "Recently used" sort.
+  /// Not an edit, so [VaultEntry.updatedAt] is untouched and nothing is
+  /// snapshotted.
+  ///
+  /// Best-effort: callers don't wait on it, so a failed write is dropped rather
+  /// than surfacing as an error. The worst outcome is a stale sort position.
+  Future<void> markUsed(String id, {DateTime? now}) async {
+    final at = now ?? DateTime.now();
+    final entry = _current.where((e) => e.id == id).firstOrNull;
+    if (entry == null) return;
+    final last = entry.lastUsedAt;
+    if (last != null && at.difference(last) < usageThrottle) return;
+    try {
+      await _commit([
+        for (final e in _current)
+          if (e.id == id) e.copyWith(lastUsedAt: at) else e,
+      ], snapshot: false);
+    } on Object {
+      // See above: usage tracking must never break opening or copying.
+    }
   }
 
   Future<void> addAll(List<VaultEntry> entries) =>

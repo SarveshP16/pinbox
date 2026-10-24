@@ -41,6 +41,16 @@ List<BankGroup> groupByBank(Iterable<VaultEntry> entries) {
   ];
 }
 
+/// Whether [entry]'s own fields match [query] — type, nickname, account name,
+/// BSB/IFSC or card ending. [query] must already be trimmed and lower-cased.
+/// Never matches on the secret itself.
+bool entryMatchesQuery(VaultEntry entry, String query) =>
+    entry.type.label.toLowerCase().contains(query) ||
+    entry.nickname.toLowerCase().contains(query) ||
+    entry.accountName.toLowerCase().contains(query) ||
+    entry.routingCode.toLowerCase().contains(query) ||
+    (entry.cardLast4.isNotEmpty && entry.cardLast4.contains(query));
+
 /// Filters by bank name, entry type, nickname and card ending. Never matches on
 /// the secret itself. A bank-name match keeps that bank's whole group.
 List<BankGroup> searchGroups(List<BankGroup> groups, String query) {
@@ -52,13 +62,7 @@ List<BankGroup> searchGroups(List<BankGroup> groups, String query) {
       result.add(group);
       continue;
     }
-    final hits = group.entries.where((e) {
-      return e.type.label.toLowerCase().contains(q) ||
-          e.nickname.toLowerCase().contains(q) ||
-          e.accountName.toLowerCase().contains(q) ||
-          e.routingCode.toLowerCase().contains(q) ||
-          (e.cardLast4.isNotEmpty && e.cardLast4.contains(q));
-    }).toList();
+    final hits = group.entries.where((e) => entryMatchesQuery(e, q)).toList();
     if (hits.isNotEmpty) result.add(BankGroup(name: group.name, entries: hits));
   }
   return result;

@@ -18,6 +18,7 @@ class EntryRow extends StatelessWidget {
     required this.onOpen,
     required this.onToggleReveal,
     required this.onCopy,
+    this.showBank = false,
   });
 
   final VaultEntry entry;
@@ -27,11 +28,21 @@ class EntryRow extends StatelessWidget {
   final VoidCallback onToggleReveal;
   final VoidCallback onCopy;
 
+  /// Prefix the subtitle with the bank's name — for rows shown outside their
+  /// bank's card, as in the Pinned section.
+  final bool showBank;
+
   @override
   Widget build(BuildContext context) {
-    final subtitle = revealed
-        ? '${entry.subtitle} · Hides in $secondsLeft s'
-        : entry.subtitle;
+    // Outside its bank's card the bank name leads. A type's placeholder subtitle
+    // ("Online banking") adds nothing next to it, so only real detail follows.
+    final ownDetail = entry.subtitle != entry.type.defaultSubtitle;
+    final base = !showBank
+        ? entry.subtitle
+        : ownDetail
+        ? '${entry.bank} · ${entry.subtitle}'
+        : entry.bank;
+    final subtitle = revealed ? '$base · Hides in $secondsLeft s' : base;
 
     return InkWell(
       onTap: onOpen,

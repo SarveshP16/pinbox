@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../../vault/domain/entry_sort.dart';
 import '../data/app_settings.dart';
 
 final settingsProvider = NotifierProvider<SettingsController, AppSettings>(
@@ -29,4 +30,6 @@ class SettingsController extends Notifier<AppSettings> {
       _update(state.copyWith(clearClipboardSeconds: value));
   Future<void> setThemeMode(ThemeMode value) =>
       _update(state.copyWith(themeMode: value));
+  Future<void> setEntrySort(EntrySort value) =>
+      _update(state.copyWith(entrySort: value));
 }

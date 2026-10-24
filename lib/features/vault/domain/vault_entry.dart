@@ -18,6 +18,8 @@ class VaultEntry {
     this.accountName = '',
     this.routingCode = '',
     this.cifNumber = '',
+    this.pinned = false,
+    this.lastUsedAt,
   });
 
   final String id;
@@ -36,6 +38,13 @@ class VaultEntry {
 
   /// Bank Info only: optional customer information file number.
   final String cifNumber;
+
+  /// Shown in the Pinned section above the bank groups instead of in its bank.
+  final bool pinned;
+
+  /// When the entry was last opened or had its secret copied; null if never.
+  /// Drives the "Recently used" sort. Not an edit, so it leaves [updatedAt] alone.
+  final DateTime? lastUsedAt;
 
   /// Second line of a list row: the card ending, else the nickname, else (for Bank
   /// Info) the account name, else a hint about what the entry is for.
@@ -56,6 +65,8 @@ class VaultEntry {
     String? accountName,
     String? routingCode,
     String? cifNumber,
+    bool? pinned,
+    DateTime? lastUsedAt,
     DateTime? updatedAt,
   }) => VaultEntry(
     id: id,
@@ -68,6 +79,8 @@ class VaultEntry {
     accountName: accountName ?? this.accountName,
     routingCode: routingCode ?? this.routingCode,
     cifNumber: cifNumber ?? this.cifNumber,
+    pinned: pinned ?? this.pinned,
+    lastUsedAt: lastUsedAt ?? this.lastUsedAt,
     createdAt: createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -86,12 +99,14 @@ class VaultEntry {
     'accountName': accountName,
     'routingCode': routingCode,
     'cifNumber': cifNumber,
+    'pinned': pinned,
+    'lastUsedAt': lastUsedAt?.toUtc().toIso8601String(),
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
-  /// Tolerant of files written before the Bank Info fields existed: they simply
-  /// come back empty.
+  /// Tolerant of files written before later fields existed: Bank Info fields come
+  /// back empty, entries come back unpinned and never used.
   factory VaultEntry.fromJson(Map<String, Object?> json) => VaultEntry(
     id: json['id'] as String,
     bank: json['bank'] as String,
@@ -103,6 +118,11 @@ class VaultEntry {
     accountName: (json['accountName'] as String?) ?? '',
     routingCode: (json['routingCode'] as String?) ?? '',
     cifNumber: (json['cifNumber'] as String?) ?? '',
+    pinned: (json['pinned'] as bool?) ?? false,
+    lastUsedAt: switch (json['lastUsedAt']) {
+      final String raw => DateTime.tryParse(raw),
+      _ => null,
+    },
     createdAt: DateTime.parse(json['createdAt'] as String),
     updatedAt: DateTime.parse(json['updatedAt'] as String),
   );

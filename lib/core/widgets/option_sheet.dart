@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../../core/theme/app_palette.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../theme/app_palette.dart';
+import '../theme/app_typography.dart';
 
 /// Bottom sheet listing [options]; resolves to the tapped value (or null if dismissed).
 Future<T?> showOptionSheet<T>(
