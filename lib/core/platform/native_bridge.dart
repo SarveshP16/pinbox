@@ -3,6 +3,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'boot_clock.dart';
+
 /// Thin wrapper over the Android-side helpers in `MainActivity.kt`. Every call
 /// degrades gracefully where the native side doesn't exist (iOS, tests).
 class NativeBridge {
@@ -38,6 +40,28 @@ class NativeBridge {
       }
     }
     await Clipboard.setData(ClipboardData(text: text));
+  }
+
+  /// Monotonic time since boot plus a boot counter, or null if unavailable.
+  ///
+  /// Used to time unlock lockouts so that changing the system clock can't end
+  /// one early. Null on iOS, under flutter_test, or if the native side fails —
+  /// the caller then falls back to the wall clock.
+  Future<BootTime?> bootTime() async {
+    if (!_hasNative) return null;
+    try {
+      final reading = await _channel.invokeMapMethod<String, Object?>(
+        'bootTime',
+      );
+      final elapsed = reading?['elapsedMs'];
+      final boot = reading?['bootId'];
+      if (elapsed is! int || boot is! int || boot < 0) return null;
+      return BootTime(elapsedMs: elapsed, bootId: boot);
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
   }
 
   Future<void> clearClipboard() async {

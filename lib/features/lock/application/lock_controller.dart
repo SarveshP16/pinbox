@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/platform/boot_clock.dart';
 import '../../../core/providers.dart';
 import '../../settings/application/settings_controller.dart';
 import '../data/credentials_store.dart';
@@ -19,6 +20,7 @@ final _credentialsStoreProvider = Provider<CredentialsStore>(
   (ref) => CredentialsStore(
     ref.watch(secureStoreProvider),
     ref.watch(secretHasherProvider),
+    bootClock: NativeBootClock(ref.watch(nativeBridgeProvider)),
   ),
 );
 

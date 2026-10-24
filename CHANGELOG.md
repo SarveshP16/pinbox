@@ -4,6 +4,19 @@ All notable changes to Pinbox. Format: [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+### Security
+- **Unlock lockout could be skipped by changing the phone's clock.** Waits are now
+  timed on Android's monotonic boot clock, which Settings can't change; the shown
+  countdown follows it too. Rebooting mid-wait restarts the wait instead of ending
+  it. iOS keeps the wall-clock behaviour, having no equivalent clock.
+- **A wrong guess went uncounted if the app was killed while it was being checked.**
+  Each guess is now recorded — and any wait it earns armed — before the slow hash
+  runs, and a correct PIN clears it again.
+- Simultaneous unlock checks could undercount failures; checks now run one at a time.
+- Android 12+ copied app data to a new phone during device-to-device setup despite
+  `allowBackup="false"`. Data-extraction rules now exclude everything from both cloud
+  backup and device transfer.
+
 ### Added
 - **Automatic backups.** Before every change, the encrypted vault is copied aside
   in app-private storage; the last 10 are kept. Settings → Backup → Automatic

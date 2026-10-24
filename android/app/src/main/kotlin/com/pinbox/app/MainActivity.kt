@@ -5,6 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.os.PersistableBundle
+import android.os.SystemClock
+import android.provider.Settings
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -39,6 +41,22 @@ class MainActivity : FlutterFragmentActivity() {
                         }
                         clipboard.setPrimaryClip(clip)
                         result.success(null)
+                    }
+                    "bootTime" -> {
+                        // Monotonic time the user can't change in Settings, plus a boot
+                        // counter so readings are only compared within one boot. Used to
+                        // time unlock lockouts. BOOT_COUNT is -1 if unavailable, which
+                        // the Dart side treats as "fall back to the wall clock".
+                        result.success(
+                            mapOf(
+                                "elapsedMs" to SystemClock.elapsedRealtime(),
+                                "bootId" to Settings.Global.getInt(
+                                    contentResolver,
+                                    Settings.Global.BOOT_COUNT,
+                                    -1,
+                                ),
+                            ),
+                        )
                     }
                     "clearClipboard" -> {
                         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
