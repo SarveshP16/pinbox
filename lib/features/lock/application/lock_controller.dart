@@ -15,7 +15,7 @@ enum LockStatus {
   unlocked,
 }
 
-final credentialsStoreProvider = Provider<CredentialsStore>(
+final _credentialsStoreProvider = Provider<CredentialsStore>(
   (ref) => CredentialsStore(
     ref.watch(secureStoreProvider),
     ref.watch(secretHasherProvider),
@@ -30,7 +30,7 @@ class LockController extends Notifier<LockStatus> {
   DateTime? _backgroundedAt;
   int _suspensions = 0;
 
-  CredentialsStore get _credentials => ref.read(credentialsStoreProvider);
+  CredentialsStore get _credentials => ref.read(_credentialsStoreProvider);
 
   @override
   LockStatus build() {
