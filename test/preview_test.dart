@@ -2,8 +2,11 @@
 // test/preview/*.png at the mockups' 780x1688 size, for eyeballing against the
 // reference screenshots. Skipped in normal runs; render with:
 //   flutter test test/preview_test.dart --update-goldens
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pinbox/features/backup/data/snapshot_store.dart';
 import 'package:pinbox/features/vault/domain/entry_type.dart';
 
 import 'support/entries.dart';
@@ -156,6 +159,39 @@ void main() {
       await tester.tap(find.byTooltip('Settings'));
       await settle(tester);
       await shot(tester, '5_settings$suffix');
+    });
+
+    testWidgets('9 automatic backups ($theme)', skip: skip, (tester) async {
+      final app = await pumpPinbox(tester, seed: seeded, prefs: prefs);
+      useMockupSize(tester);
+
+      // A realistic history: a deletion a few minutes ago, an edit earlier
+      // today, and the state as of yesterday evening.
+      final now = DateTime.now();
+      for (final (ago, count) in [
+        (const Duration(minutes: 3), seeded.length),
+        (const Duration(hours: 4), seeded.length - 1),
+        (const Duration(hours: 22), seeded.length - 2),
+      ]) {
+        final file = File('preview-snapshot-${ago.inMinutes}');
+        app.vault.snapshotContents[file.path] = seeded.take(count).toList();
+        app.snapshots.held.add(
+          VaultSnapshot(file: file, takenAt: now.subtract(ago)),
+        );
+      }
+
+      await tapPin(tester, testPin);
+      await tester.tap(find.byTooltip('Settings'));
+      await settle(tester);
+      await tester.scrollUntilVisible(
+        find.text('Automatic backups'),
+        200,
+        scrollable: find.byType(Scrollable),
+      );
+      await settle(tester);
+      await tester.tap(find.text('Automatic backups'));
+      await settle(tester);
+      await shot(tester, '9_automatic_backups$suffix');
     });
 
     testWidgets('new types ($theme)', skip: skip, (tester) async {

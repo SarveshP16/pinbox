@@ -6,7 +6,7 @@ Everything lives in a single AES-256-GCM encrypted file. Its random 256-bit key 
 
 <b>Getting in</b>
 
-A 6-digit master PIN, with a longer master password as a fallback, and optional fingerprint or face unlock. Repeated wrong guesses are rate-limited: five free tries, then a 30-second wait that doubles up to an hour. The counter survives restarting the app, so force-quitting does not reset it.
+A 6-digit master PIN, with a longer master password as a fallback, and optional fingerprint or face unlock. Repeated wrong guesses are rate-limited: five free tries, then a 30-second wait that doubles up to an hour. Force-quitting the app, rebooting the phone or changing its clock does not shorten a wait.
 
 <b>Built for reading a PIN in public</b>
 
@@ -18,7 +18,9 @@ Debit card, credit card, card lock PIN, login PIN, phone PIN, password, and bank
 
 <b>Backups</b>
 
-Export an encrypted backup file protected by a password you choose at export time — deliberately not your 6-digit PIN, which is too small a space to protect a file that can be copied off the phone.
+Before every change, Pinbox quietly keeps an encrypted copy of the previous state on the phone, so a deleted entry or a bad edit can be put back from Settings. These automatic backups never leave the device and can't be read after an uninstall.
+
+For a copy that survives losing the phone, export an encrypted backup file protected by a password you choose at export time — deliberately not your 6-digit PIN, which is too small a space to protect a file that can be copied off the phone.
 
 <b>There is no recovery</b>
 

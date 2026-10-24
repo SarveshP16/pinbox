@@ -2,9 +2,14 @@ First public release (beta).
 
 Offline, encrypted storage for bank card PINs, login PINs, phone PINs, passwords
 and bank account details. Master PIN with password fallback and optional
-biometric unlock, escalating lockout on wrong guesses, timed reveal, blocked
-screenshots, auto-wiping clipboard, auto-lock on backgrounding, dark mode, and
-password-protected encrypted backups.
+biometric unlock, timed reveal, blocked screenshots, auto-wiping clipboard,
+auto-lock on backgrounding, dark mode, and password-protected encrypted backups.
+
+Automatic backups: an encrypted copy of the previous state is kept on the phone
+before every change, so a deleted entry can be restored from Settings.
+
+Wrong guesses are rate-limited, and the wait can't be cut short by force-quitting,
+rebooting or changing the phone's clock.
 
 Marked beta because the app is newly released and iOS is written for but
 untested. Keep an exported backup.

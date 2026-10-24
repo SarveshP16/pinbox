@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **App:** Pinbox (`com.pinbox.app`)
-**Last updated:** 22 October 2026
+**Last updated:** 24 October 2026
 
 ## The short version
 
@@ -20,6 +20,15 @@ encrypted file in the app's private storage. The encryption key is held by the
 Android Keystore. Your master PIN and master password are not stored at all —
 only salted PBKDF2-HMAC-SHA256 hashes of them are kept, so they cannot be read
 back out of the app.
+
+Before each change, Pinbox keeps an **automatic backup**: a copy of that same
+encrypted file from just before the change, held in the same private storage
+and encrypted with the same key. The ten most recent are kept. They exist so a
+deletion or a mistaken edit can be undone, and they are never sent anywhere.
+
+Pinbox excludes all of its data from Android's cloud backup and from
+device-to-device transfer when you set up a new phone, so none of it is copied
+off the device by the operating system either.
 
 ## What Pinbox does not do
 
@@ -61,8 +70,10 @@ there is no third party involved in any part of the app.
 
 ## Data deletion
 
-Uninstalling Pinbox deletes the encrypted vault and its keystore entry. You can
-also delete individual entries in the app at any time. Because nothing is stored
+Uninstalling Pinbox deletes the encrypted vault, its automatic backups and its
+keystore entry. You can also delete individual entries in the app at any time;
+a deleted entry remains inside the automatic backups until ten further changes
+have pushed it out, or until you uninstall. Because nothing is stored
 off-device, there is nothing to request deletion of from anyone else.
 
 There is no recovery mechanism. If you forget both your master PIN and master
