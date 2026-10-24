@@ -6,8 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pinbox/app/app.dart';
+import 'package:pinbox/core/crypto/packed_cipher.dart';
 import 'package:pinbox/core/crypto/secret_hasher.dart';
 import 'package:pinbox/core/providers.dart';
+import 'package:pinbox/features/backup/data/snapshot_store.dart';
 import 'package:pinbox/features/lock/data/credentials_store.dart';
 import 'package:pinbox/features/vault/data/vault_repository.dart';
 import 'package:pinbox/features/vault/domain/vault_entry.dart';
@@ -15,20 +17,66 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'memory_secure_store.dart';
 
+/// Snapshots held in a list instead of files. Real `dart:io` never completes
+/// inside `testWidgets`' fake-async zone, so the real store would hang the test.
+class InMemorySnapshotStore extends SnapshotStore {
+  InMemorySnapshotStore() : super(directory: () async => Directory('unused'));
+
+  /// Newest first, mirroring [SnapshotStore.list].
+  final List<VaultSnapshot> held = [];
+
+  @override
+  Future<List<VaultSnapshot>> list() async => [...held];
+
+  @override
+  Future<void> capture(File vault) async {}
+
+  @override
+  Future<void> wipe() async => held.clear();
+}
+
 /// A vault that lives in a list instead of an encrypted file, so widget tests
 /// don't touch disk (real file I/O stalls `pumpAndSettle`).
+///
+/// Like the real repository, each save first snapshots the previous state, so
+/// the delete-then-restore flow can be driven through the UI.
 class InMemoryVaultRepository extends VaultRepository {
-  InMemoryVaultRepository([List<VaultEntry> seed = const []])
-    : stored = [...seed],
-      super(keyStore: MemorySecureStore(), file: () async => File('unused'));
+  InMemoryVaultRepository(
+    this.snapshotStore, [
+    List<VaultEntry> seed = const [],
+  ]) : stored = [...seed],
+       super(keyStore: MemorySecureStore(), file: () async => File('unused'));
 
+  final InMemorySnapshotStore snapshotStore;
   List<VaultEntry> stored;
+
+  /// What each snapshot holds, keyed by its (never-written) file path. A snapshot
+  /// missing from here reads as undecryptable, like one from a lost key.
+  final Map<String, List<VaultEntry>> snapshotContents = {};
+  var _taken = 0;
 
   @override
   Future<List<VaultEntry>> load() async => [...stored];
 
   @override
-  Future<void> save(List<VaultEntry> entries) async => stored = [...entries];
+  Future<void> save(List<VaultEntry> entries) async {
+    if (stored.isNotEmpty) {
+      final file = File('snapshot-${_taken++}');
+      snapshotContents[file.path] = [...stored];
+      snapshotStore.held.insert(
+        0,
+        VaultSnapshot(file: file, takenAt: DateTime.now()),
+      );
+    }
+    stored = [...entries];
+  }
+
+  @override
+  Future<List<VaultEntry>> readSnapshot(VaultSnapshot snapshot) async {
+    final contents = snapshotContents[snapshot.file.path];
+    if (contents == null) throw const DecryptionFailure();
+    return [...contents];
+  }
 }
 
 /// No biometric hardware, so the unlock screen never auto-prompts.
@@ -81,6 +129,8 @@ class TestApp {
   final MemorySecureStore store;
   final InMemoryVaultRepository vault;
   final FakeClipboard clipboard;
+
+  InMemorySnapshotStore get snapshots => vault.snapshotStore;
 }
 
 const testPin = '123456';
@@ -119,7 +169,8 @@ Future<TestApp> pumpPinbox(
       hasher,
     ).save(pin: testPin, password: testPassword);
   }
-  final vault = InMemoryVaultRepository(seed);
+  final snapshots = InMemorySnapshotStore();
+  final vault = InMemoryVaultRepository(snapshots, seed);
 
   final clipboard = FakeClipboard();
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -145,6 +196,9 @@ Future<TestApp> pumpPinbox(
         secureStoreProvider.overrideWithValue(store),
         secretHasherProvider.overrideWithValue(hasher),
         vaultRepositoryProvider.overrideWithValue(vault),
+        // Without this the Automatic backups row would reach path_provider's
+        // platform channel, which has no handler in flutter_test.
+        snapshotStoreProvider.overrideWithValue(snapshots),
         localAuthProvider.overrideWithValue(NoBiometrics()),
       ],
       child: const PinboxApp(),

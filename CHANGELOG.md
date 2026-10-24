@@ -5,6 +5,15 @@ All notable changes to Pinbox. Format: [Keep a Changelog](https://keepachangelog
 ## [Unreleased]
 
 ### Added
+- **Automatic backups.** Before every change, the encrypted vault is copied aside
+  in app-private storage; the last 10 are kept. Settings → Backup → Automatic
+  backups lists them by age and entry count and restores one after a confirmation.
+  Snapshots use the same keystore key as the vault, so nothing is written in the
+  clear and no second password is needed — but they cannot be read after an
+  uninstall, so the password-protected export is still the off-device copy.
+  Restoring is itself snapshotted, and wiping the vault wipes the snapshots too.
+- Deleting an entry is now recoverable, and the confirmation says where to look
+  instead of "This can't be undone".
 - Settings → Support: a "Buy me a coffee on Ko-fi" row, and an app version line
   ("Pinbox 1.0.0 (Beta) · Build 1") read live from the platform via `package_info_plus`
   rather than hardcoded.

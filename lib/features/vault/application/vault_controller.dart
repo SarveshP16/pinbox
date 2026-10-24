@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../../backup/data/snapshot_store.dart';
 import '../../lock/application/lock_controller.dart';
+import '../data/vault_repository.dart';
 import '../domain/vault_entry.dart';
 
 final vaultProvider =
@@ -39,6 +41,18 @@ class VaultController extends AsyncNotifier<List<VaultEntry>> {
     for (final e in _current)
       if (e.id != id) e,
   ]);
+
+  /// Replaces the vault with the contents of an automatic snapshot.
+  ///
+  /// The pre-restore state is itself copied aside by [VaultRepository.save], so
+  /// restoring the wrong snapshot is recoverable too. Returns the entry count.
+  Future<int> restoreSnapshot(VaultSnapshot snapshot) async {
+    final entries = await ref
+        .read(vaultRepositoryProvider)
+        .readSnapshot(snapshot);
+    await _commit(entries);
+    return entries.length;
+  }
 
   /// Adds entries from a backup that aren't already here; where an id exists in
   /// both, the more recently edited copy wins. Returns how many entries changed.

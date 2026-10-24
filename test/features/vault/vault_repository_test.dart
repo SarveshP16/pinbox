@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pinbox/core/crypto/packed_cipher.dart';
+import 'package:pinbox/features/backup/data/snapshot_store.dart';
 import 'package:pinbox/features/vault/data/vault_repository.dart';
 
 import '../../support/entries.dart';
@@ -78,5 +79,96 @@ void main() {
     await repo.wipe();
     expect(File('${dir.path}/vault.bin').existsSync(), isFalse);
     expect(keys.values, isEmpty);
+  });
+
+  group('with automatic snapshots', () {
+    late SnapshotStore snapshots;
+    late VaultRepository snapshotting;
+
+    setUp(() {
+      snapshots = SnapshotStore(
+        directory: () async => Directory('${dir.path}/snapshots'),
+        keep: 3,
+      );
+      snapshotting = VaultRepository(
+        keyStore: keys,
+        file: () async => File('${dir.path}/vault.bin'),
+        snapshots: snapshots,
+      );
+    });
+
+    test('the first save has no previous state to snapshot', () async {
+      await snapshotting.save([entry(id: '1')]);
+      expect(await snapshots.list(), isEmpty);
+    });
+
+    test('a later save keeps the state from just before it', () async {
+      await snapshotting.save([entry(id: '1', secret: '1111')]);
+      await snapshotting.save([
+        entry(id: '1', secret: '1111'),
+        entry(id: '2', secret: '2222'),
+      ]);
+
+      final kept = await snapshots.list();
+      expect(kept, hasLength(1));
+      final previous = await snapshotting.readSnapshot(kept.single);
+      expect(previous.map((e) => e.id), ['1']);
+    });
+
+    test('a deleted entry is recoverable from the snapshot', () async {
+      await snapshotting.save([entry(id: 'keep'), entry(id: 'doomed')]);
+      await snapshotting.save([entry(id: 'keep')]);
+
+      expect((await snapshotting.load()).map((e) => e.id), ['keep']);
+      final previous = await snapshotting.readSnapshot(
+        (await snapshots.list()).first,
+      );
+      expect(previous.map((e) => e.id), ['keep', 'doomed']);
+    });
+
+    test('snapshots are encrypted, not plaintext copies', () async {
+      await snapshotting.save([entry(bank: 'Harbour Bank', secret: '4829')]);
+      await snapshotting.save([entry(bank: 'Harbour Bank', secret: '5555')]);
+
+      final raw = String.fromCharCodes(
+        await (await snapshots.list()).first.file.readAsBytes(),
+      );
+      for (final leak in ['Harbour', '4829', 'secret']) {
+        expect(raw, isNot(contains(leak)));
+      }
+    });
+
+    test('a snapshot cannot be read once the key is gone', () async {
+      await snapshotting.save([entry(id: '1')]);
+      await snapshotting.save([entry(id: '1'), entry(id: '2')]);
+      final kept = (await snapshots.list()).first;
+
+      keys.values.clear();
+      expect(
+        snapshotting.readSnapshot(kept),
+        throwsA(isA<DecryptionFailure>()),
+      );
+    });
+
+    test('wipe clears the snapshots too, not just the vault', () async {
+      await snapshotting.save([entry(id: '1')]);
+      await snapshotting.save([entry(id: '1'), entry(id: '2')]);
+      expect(await snapshots.list(), isNotEmpty);
+
+      await snapshotting.wipe();
+      expect(await snapshots.list(), isEmpty);
+    });
+
+    test('snapshots live beside the vault, not in the same file', () async {
+      await snapshotting.save([entry(id: '1')]);
+      await snapshotting.save([entry(id: '1'), entry(id: '2')]);
+
+      final topLevel = dir
+          .listSync()
+          .map((e) => e.path.split(RegExp(r'[\\/]')).last)
+          .toList()
+        ..sort();
+      expect(topLevel, ['snapshots', 'vault.bin']);
+    });
   });
 }

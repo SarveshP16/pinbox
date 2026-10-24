@@ -11,7 +11,8 @@ Future<bool> confirmDeleteEntry(BuildContext context, VaultEntry entry) async {
     builder: (context) => AlertDialog(
       title: Text('Delete this ${entry.type.entryNoun}?'),
       content: Text(
-        '${entry.bank} · ${entry.type.label} will be removed from this device. This can’t be undone.',
+        '${entry.bank} · ${entry.type.label} will be removed. If you change your '
+        'mind, Settings › Automatic backups still has the version from just before this.',
       ),
       actions: [
         TextButton(

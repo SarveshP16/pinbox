@@ -12,7 +12,10 @@ import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/page_header.dart';
+import '../../backup/application/snapshot_controller.dart';
+import '../../backup/domain/snapshot_labels.dart';
 import '../../backup/presentation/backup_actions.dart';
+import '../../backup/presentation/restore_snapshot_sheet.dart';
 import '../../lock/application/lock_controller.dart';
 import '../application/settings_controller.dart';
 import '../domain/duration_labels.dart';
@@ -32,6 +35,18 @@ const _themeChoices = [
 
 String _themeLabel(ThemeMode mode) =>
     _themeChoices.firstWhere((c) => c.value == mode).label;
+
+/// "3 kept · newest just now" for the Automatic backups row.
+String _snapshotSubtitle(AsyncValue<List<SnapshotSummary>> snapshots) =>
+    switch (snapshots) {
+      AsyncLoading() => 'Checking this device',
+      AsyncError() => 'Couldn’t be read on this device',
+      AsyncValue(value: final list) when (list ?? const []).isEmpty =>
+        'None yet · taken before each change',
+      AsyncValue(value: final list) =>
+        '${list!.length} kept · newest '
+            '${describeSnapshotTime(list.first.snapshot.takenAt).toLowerCase()}',
+    };
 
 /// Screen 5: unlock, privacy, appearance and backup preferences.
 class SettingsScreen extends ConsumerWidget {
@@ -175,6 +190,14 @@ class SettingsScreen extends ConsumerWidget {
                         subtitle: 'Add PINs from an exported file',
                         icon: LucideIcons.upload,
                         onTap: () => importBackup(context, ref),
+                      ),
+                      ActionTile(
+                        title: 'Automatic backups',
+                        subtitle: _snapshotSubtitle(
+                          ref.watch(snapshotsProvider),
+                        ),
+                        icon: LucideIcons.history,
+                        onTap: () => showRestoreSnapshotSheet(context, ref),
                       ),
                     ],
                   ),

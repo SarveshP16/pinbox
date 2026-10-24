@@ -5,6 +5,7 @@ import 'package:cryptography/cryptography.dart';
 
 import '../../../core/crypto/packed_cipher.dart';
 import '../../../core/platform/secure_store.dart';
+import '../../backup/data/snapshot_store.dart';
 import '../domain/vault_entry.dart';
 
 /// Persists every entry as one AES-256-GCM encrypted file.
@@ -16,6 +17,7 @@ class VaultRepository {
   VaultRepository({
     required this.keyStore,
     required this.file,
+    this.snapshots,
     PackedCipher? cipher,
   }) : _cipher = cipher ?? PackedCipher();
 
@@ -25,27 +27,31 @@ class VaultRepository {
 
   /// Where the encrypted vault lives (a function so the directory can be resolved lazily).
   final Future<File> Function() file;
+
+  /// Automatic local snapshots. Omitted in tests that don't care about them.
+  final SnapshotStore? snapshots;
   final PackedCipher _cipher;
 
   Future<List<VaultEntry>> load() async {
     final vaultFile = await file();
     if (!await vaultFile.exists()) return const [];
-    final key = await _existingKey();
-    if (key == null) {
-      // The file survived but its key didn't (e.g. keystore was reset). It can
-      // never be decrypted, so surface that instead of silently showing "empty".
-      throw const DecryptionFailure(
-        'The vault key is missing from this device',
-      );
-    }
-    final clear = await _cipher.decrypt(await vaultFile.readAsBytes(), key);
-    final json = jsonDecode(utf8.decode(clear)) as Map<String, Object?>;
-    final entries = (json['entries'] as List).cast<Map<String, Object?>>();
-    return [for (final e in entries) VaultEntry.fromJson(e)];
+    return _entriesFrom(await vaultFile.readAsBytes(), await _requireKey());
+  }
+
+  /// Entries held in an automatic snapshot, read with the current vault key.
+  Future<List<VaultEntry>> readSnapshot(VaultSnapshot snapshot) async {
+    return _entriesFrom(
+      await snapshot.file.readAsBytes(),
+      await _requireKey(),
+    );
   }
 
   Future<void> save(List<VaultEntry> entries) async {
     final vaultFile = await file();
+
+    // Copy the pre-change vault aside first, so this save can be undone.
+    await snapshots?.capture(vaultFile);
+
     final key = await _existingKey() ?? await _createKey();
     final body = utf8.encode(
       jsonEncode({
@@ -64,7 +70,32 @@ class VaultRepository {
   Future<void> wipe() async {
     final vaultFile = await file();
     if (await vaultFile.exists()) await vaultFile.delete();
+    // Snapshots are copies of the same data, so they go too.
+    await snapshots?.wipe();
     await keyStore.delete(_keyName);
+  }
+
+  List<VaultEntry> _parse(List<int> clear) {
+    final json = jsonDecode(utf8.decode(clear)) as Map<String, Object?>;
+    final entries = (json['entries'] as List).cast<Map<String, Object?>>();
+    return [for (final e in entries) VaultEntry.fromJson(e)];
+  }
+
+  Future<List<VaultEntry>> _entriesFrom(List<int> packed, SecretKey key) async {
+    return _parse(await _cipher.decrypt(packed, key));
+  }
+
+  /// The data key, or [DecryptionFailure] if it is gone. A vault file that
+  /// outlived its key (keystore reset, restored-from-backup install) can never be
+  /// decrypted, so say so instead of silently showing an empty vault.
+  Future<SecretKey> _requireKey() async {
+    final key = await _existingKey();
+    if (key == null) {
+      throw const DecryptionFailure(
+        'The vault key is missing from this device',
+      );
+    }
+    return key;
   }
 
   Future<SecretKey?> _existingKey() async {
