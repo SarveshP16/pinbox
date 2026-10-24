@@ -4,6 +4,8 @@ All notable changes to Pinbox. Format: [Keep a Changelog](https://keepachangelog
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-25
+
 ### Added
 - **Pinned entries.** The pin button on an entry's screen moves it into a Pinned
   section above the bank cards, where its row names its bank. Unpinning returns it

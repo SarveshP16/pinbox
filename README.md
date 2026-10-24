@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0%20beta-0E5A4B" alt="Version 1.0.0 beta">
+  <img src="https://img.shields.io/badge/version-1.1.0%20beta-0E5A4B" alt="Version 1.1.0 beta">
   <img src="https://img.shields.io/badge/platform-Android-0E5A4B?logo=android&logoColor=white" alt="Platform: Android">
   <img src="https://img.shields.io/badge/Flutter-3.47-0E5A4B?logo=flutter&logoColor=white" alt="Built with Flutter 3.47">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-0E5A4B" alt="License: GPL-3.0-or-later"></a>

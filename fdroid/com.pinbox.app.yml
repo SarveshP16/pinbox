@@ -32,7 +32,27 @@ Builds:
       - $$flutter$$
       - .pub-cache
 
+  - versionName: 1.1.0
+    versionCode: 2
+    commit: v1.1.0
+    output: build/app/outputs/flutter-apk/app-release.apk
+    srclibs:
+      - flutter@3.47.2
+    rm:
+      - ios
+    prebuild:
+      - git -C $$flutter$$ checkout -f 3.47.2
+      - $$flutter$$/bin/flutter config --no-analytics --no-cli-animations
+    build:
+      - $$flutter$$/bin/flutter pub get
+      - $$flutter$$/bin/flutter build apk --release
+    scanignore:
+      - $$flutter$$/bin/cache
+    scandelete:
+      - $$flutter$$
+      - .pub-cache
+
 AutoUpdateMode: Version v%v
 UpdateCheckMode: Tags
-CurrentVersion: 1.0.0
-CurrentVersionCode: 1
+CurrentVersion: 1.1.0
+CurrentVersionCode: 2

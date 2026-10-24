@@ -1,0 +1,10 @@
+Pin and sort.
+
+Pin the entries you use most: the pin button on an entry's screen moves it to a
+Pinned section at the top of My PINs. Tap it again to put it back in its bank.
+
+A new sort button orders the list A–Z, by recently used or by recently added,
+and remembers your choice. The list is now A–Z by default.
+
+Pins and recently-used times don't use up your automatic backups, which are
+kept for real edits.
